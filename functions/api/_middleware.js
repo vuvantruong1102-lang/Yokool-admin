@@ -17,6 +17,14 @@ const PUBLIC_ROUTES = [
   { path: '/api/inquiries',  method: 'POST' },
 ];
 
+// Public path PREFIXES — anything matching these on GET requires no auth
+const PUBLIC_GET_PREFIXES = [
+  '/api/products',   // list + detail by id/slug
+  '/api/articles',   // list + detail by slug
+  '/api/banners',    // banner list
+  '/api/config',     // site config
+];
+
 export async function onRequest(context) {
   const { request, env, next, data } = context;
   const url = new URL(request.url);
@@ -31,7 +39,8 @@ export async function onRequest(context) {
   }
 
   // Public endpoints bypass auth check
-  const isPublic = PUBLIC_ROUTES.some(r => r.path === path && r.method === method);
+  const isPublic = PUBLIC_ROUTES.some(r => r.path === path && r.method === method)
+    || (method === 'GET' && PUBLIC_GET_PREFIXES.some(p => path === p || path.startsWith(p + '/')));
 
   if (!isPublic) {
     const token = getCookie(request, 'admin_session');
