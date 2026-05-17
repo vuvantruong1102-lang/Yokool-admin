@@ -1,8 +1,3 @@
--- ============================================================
--- YOKOOL ADMIN — D1 Database Schema
--- Run once with: wrangler d1 execute yokool-admin --file=schema.sql
--- Or paste into Cloudflare dashboard → D1 → Console
--- ============================================================
 
 -- Admin users (Jay + nhân viên tương lai)
 CREATE TABLE IF NOT EXISTS admin_users (
