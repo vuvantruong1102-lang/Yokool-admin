@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Đăng nhập — Yokool Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="auth-shell">
+  <form class="auth-card" id="loginForm" novalidate>
+    <div class="auth-brand">YOKOOL</div>
+    <div class="auth-eyebrow">Admin · v1.0</div>
+
+    <h1 class="auth-title">Đăng nhập</h1>
+    <p class="auth-subtitle">Truy cập trang quản trị Yokool.</p>
+
+    <div class="auth-error" id="authError"></div>
+
+    <div class="auth-field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+    </div>
+
+    <div class="auth-field">
+      <label for="password">Mật khẩu</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8">
+    </div>
+
+    <button type="submit" class="auth-submit" id="submitBtn">
+      Đăng nhập
+      <span aria-hidden="true">→</span>
+    </button>
+
+    <p class="auth-helper">Phiên đăng nhập có hiệu lực 7 ngày</p>
+  </form>
+</main>
+
+<script>
+(async function () {
+  // If no admin yet, redirect to setup
+  try {
+    const r = await fetch('/api/auth/setup', { credentials: 'include' });
+    if (r.ok) {
+      const data = await r.json();
+      if (data.needsSetup) {
+        window.location.replace('/setup.html');
+        return;
+      }
+    }
+  } catch {}
+
+  // If already logged in, go to dashboard
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    if (r.ok) {
+      window.location.replace('/');
+      return;
+    }
+  } catch {}
+
+  const form = document.getElementById('loginForm');
+  const errorBox = document.getElementById('authError');
+  const submitBtn = document.getElementById('submitBtn');
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('is-visible');
+  }
+
+  function clearError() {
+    errorBox.classList.remove('is-visible');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const email = form.email.value.trim();
+    const password = form.password.value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Đang đăng nhập...';
+
+    try {
+      const r = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        showError(data.error || 'Đăng nhập thất bại');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Đăng nhập <span aria-hidden="true">→</span>';
+        return;
+      }
+      window.location.replace('/');
+    } catch (err) {
+      showError('Lỗi kết nối. Vui lòng thử lại.');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Đăng nhập <span aria-hidden="true">→</span>';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

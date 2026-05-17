@@ -1,0 +1,102 @@
+<!-- 
+============================================================
+PATCH cho b2b.html — Gửi yêu cầu B2B lên admin database
+============================================================
+
+CÁCH DÙNG:
+1. Mở file b2b.html
+2. Tìm dòng:   <script src="script.js"></script>
+3. Phía SAU dòng đó (trước </body>), tìm block <script> chứa form B2B handler
+4. THAY THẾ block <script> đó bằng đoạn dưới đây
+
+Yêu cầu: file yokool-api.js đã được thêm vào trang, hoặc paste API_BASE trực tiếp.
+============================================================
+-->
+
+<script>
+(function () {
+  const form = document.getElementById('b2bForm');
+  if (!form) return;
+
+  // 👉 SỬA URL NÀY khi setup admin xong
+  const API_BASE = 'https://yokool-admin.pages.dev';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const required = ['company', 'name', 'email', 'phone', 'quantity'];
+    let isValid = true;
+
+    required.forEach(field => {
+      const input = form.elements[field];
+      const value = (data.get(field) || '').trim();
+      if (!value) { input?.classList.add('is-invalid'); isValid = false; }
+      else { input?.classList.remove('is-invalid'); }
+    });
+
+    const phone = (data.get('phone') || '').trim().replace(/\s+/g, '');
+    if (phone && !/^0\d{9,10}$/.test(phone)) {
+      form.elements.phone?.classList.add('is-invalid');
+      window.yokoolToast && window.yokoolToast('Số điện thoại không đúng định dạng', 'info');
+      return;
+    }
+    if (!isValid) {
+      window.yokoolToast && window.yokoolToast('Vui lòng điền đầy đủ thông tin', 'info');
+      return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const oldText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Đang gửi...';
+
+    const payload = {
+      company:       data.get('company'),
+      contact_name:  data.get('name'),
+      position:      data.get('position') || '',
+      email:         data.get('email'),
+      phone:         phone,
+      products:      data.getAll('products'),
+      quantity:      data.get('quantity'),
+      deadline:      data.get('deadline') || '',
+      purpose:       data.get('purpose') || '',
+      customer_note: data.get('note') || '',
+    };
+
+    // Backup localStorage (phòng khi API lỗi)
+    try {
+      const all = JSON.parse(localStorage.getItem('yokool_b2b_inquiries') || '[]');
+      all.unshift({ ...payload, createdAt: new Date().toISOString() });
+      localStorage.setItem('yokool_b2b_inquiries', JSON.stringify(all.slice(0, 50)));
+    } catch {}
+
+    try {
+      const res = await fetch(API_BASE + '/api/inquiries', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Gửi thất bại');
+      }
+
+      window.yokoolToast && window.yokoolToast('Đã gửi yêu cầu! Đội B2B sẽ liên hệ trong 24h', 'success');
+      form.reset();
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      console.error('[B2B submit error]', err);
+      window.yokoolToast && window.yokoolToast('Lỗi gửi: ' + err.message + ' — vui lòng thử lại hoặc gọi hotline', 'info');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = oldText;
+    }
+  });
+
+  form.querySelectorAll('input, textarea, select').forEach(input => {
+    input.addEventListener('input',  () => input.classList.remove('is-invalid'));
+    input.addEventListener('change', () => input.classList.remove('is-invalid'));
+  });
+})();
+</script>

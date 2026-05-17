@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Yokool Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-shell" id="app" style="visibility:hidden">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-logo">YOKOOL</span>
+      <span class="sidebar-brand-sub">Admin · v1.0</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#/dashboard" class="sidebar-link" data-route="dashboard">
+        <span class="sidebar-link-icon">▦</span>
+        Tổng quan
+      </a>
+      <a href="#/orders" class="sidebar-link" data-route="orders">
+        <span class="sidebar-link-icon">▤</span>
+        Đơn hàng B2C
+      </a>
+      <a href="#/inquiries" class="sidebar-link" data-route="inquiries">
+        <span class="sidebar-link-icon">◆</span>
+        Yêu cầu B2B
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      yokool.vn / admin
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-title" id="topbarTitle">Tổng quan</div>
+    <div class="topbar-user">
+      <div>
+        <div class="topbar-user-name" id="topbarUserName">—</div>
+        <div class="topbar-user-email" id="topbarUserEmail"></div>
+      </div>
+      <button class="topbar-logout" id="logoutBtn">Đăng xuất</button>
+    </div>
+  </header>
+
+  <main class="main" id="main">
+    <div class="loading">Đang tải</div>
+  </main>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

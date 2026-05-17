@@ -1,0 +1,82 @@
+<!-- 
+============================================================
+PATCH cho checkout.html — Gửi đơn B2C lên admin database
+============================================================
+
+CÁCH DÙNG:
+1. Mở file checkout.html
+2. Tìm phần xử lý submit form đặt đơn (trong file script.js hoặc inline trong checkout.html).
+   Hiện tại Jay đang dùng YokoolCart.saveOrder() → lưu localStorage.
+3. Sau bước lưu localStorage, GỌI THÊM hàm sendOrderToAdmin() bên dưới.
+
+CÁCH ÁP DỤNG ĐƠN GIẢN NHẤT:
+- Thêm <script> block này vào TRƯỚC </body> trong checkout.html
+- Khi submit thành công, gọi `window.YokoolAPI.submitOrder(order)`
+
+============================================================
+-->
+
+<script>
+window.YokoolAPI = (function () {
+  // 👉 SỬA URL NÀY khi setup admin xong
+  const API_BASE = 'https://yokool-admin.pages.dev';
+
+  // Gọi: await window.YokoolAPI.submitOrder({...})
+  // Trả về: { ok: true, order_id, total }
+  async function submitOrder(order) {
+    const payload = {
+      customer_name:     order.customer_name || order.name,
+      customer_phone:    (order.customer_phone || order.phone || '').replace(/\s+/g, ''),
+      customer_email:    order.customer_email || order.email || '',
+      shipping_address:  order.shipping_address || order.address,
+      shipping_ward:     order.shipping_ward || order.ward || '',
+      shipping_district: order.shipping_district || order.district || '',
+      shipping_province: order.shipping_province || order.province,
+      customer_note:     order.customer_note || order.note || '',
+      payment_method:    order.payment_method || 'COD',
+      shipping_fee:      order.shipping_fee || 0,
+      items: (order.items || []).map(it => ({
+        product_code: it.product_code || it.code,
+        product_name: it.product_name || it.name,
+        quantity:     it.quantity || it.qty,
+        unit_price:   it.unit_price || it.price,
+      })),
+    };
+
+    const res = await fetch(API_BASE + '/api/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Lỗi gửi đơn');
+    return data;
+  }
+
+  return { submitOrder };
+})();
+</script>
+
+<!-- 
+============================================================
+SAU ĐÓ trong script.js (chỗ xử lý submit checkout):
+
+  // ... validate xong, có biến `order` chứa data ...
+
+  // 1. Lưu localStorage như cũ (làm backup)
+  YokoolCart.saveOrder(order);
+
+  // 2. Gửi lên admin
+  try {
+    const result = await window.YokoolAPI.submitOrder(order);
+    // result.order_id ví dụ: "ORD-20260517-001"
+    window.yokoolToast('Đã đặt đơn thành công! Mã đơn: ' + result.order_id, 'success');
+    YokoolCart.clear();
+    window.location.href = 'index.html';
+  } catch (err) {
+    console.error('[Order submit]', err);
+    window.yokoolToast('Đặt đơn lỗi: ' + err.message + '. Vui lòng gọi hotline để hỗ trợ.', 'error');
+  }
+
+============================================================
+-->
